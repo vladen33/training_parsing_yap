@@ -1,3 +1,5 @@
+import re
+
 import requests_cache
 from bs4 import BeautifulSoup
 
@@ -18,6 +20,22 @@ if __name__ == '__main__':
             break
     else:
         raise Exception('Ничего не нашлось')
-    for a in a_tags:
-        print(a)
 
+    results = []
+    pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
+    for a_tag in a_tags:
+        link = a_tag['href']
+        text_match = re.search(pattern, a_tag.text)
+        if text_match is None:
+            version = a_tag.text
+            status = ''
+        else:
+            version = text_match.group('version')
+            status = text_match.group('status')
+            results.append(
+                (link, version, status)
+            )
+
+    # Печать результата.
+    for row in results:
+        print(*row)
