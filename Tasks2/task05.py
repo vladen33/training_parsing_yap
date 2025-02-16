@@ -1,7 +1,6 @@
-# Импортируйте все нужные библиотеки.
 import requests
 from bs4 import BeautifulSoup
-from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy import Column, Integer, String, create_engine, insert
 from sqlalchemy.orm import Session, declarative_base
 
 PEP_URL = 'https://peps.python.org/numerical/'
@@ -20,11 +19,18 @@ Base.metadata.create_all(engine)
 
 request_session = requests.Session()
 soup = BeautifulSoup(request_session.get(PEP_URL).text, features='lxml')
-print(soup)
+peps = soup.select('#numerical-index table tbody')
+pep_rows_soup = BeautifulSoup(str(peps), features='lxml' )
+pep_rows = pep_rows_soup.find_all('tr')
 
+db_session = Session(engine)
 
-# Ваш код - здесь:
-# создайте таблицу в БД;
-# загрузите страницу PEP_URL;
-# создайте объект BeautifulSoup;
-# спарсите таблицу построчно и запишите данные в БД.
+for pep in pep_rows:
+    row = pep.text.split('\n')[:4]
+    db_session.execute(insert(Pep).values(
+        type_status = row[0],
+        number = row[1],
+        title = row[2],
+        authors = row[3]
+    ))
+    db_session.commit()
